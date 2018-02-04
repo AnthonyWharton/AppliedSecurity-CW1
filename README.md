@@ -24,3 +24,6 @@ _- M. Might.  (http://matt.might.net/articles/what-cs-majors-should-know)_
 > topicscovered in theory alone, _plus_ b) develop a starting point for later 
 > courseworks  where you are tasked with attacking cryptosystems of this type.
 
+## Usage
+
+From the root of the repository, run `make`, et voila!
