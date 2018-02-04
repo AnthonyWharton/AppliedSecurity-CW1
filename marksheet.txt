@@ -43,7 +43,7 @@ generality, realism, or style of a solution.
 
 [X] Stage 1 : implement RSA     encryption                           ( 10%)
 
-[?] Stage 2 : implement RSA     decryption                           ( 10%)
+[X] Stage 2 : implement RSA     decryption                           ( 10%)
 
 [?] Stage 3 : implement ElGamal encryption                           ( 10%)
 

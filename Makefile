@@ -20,9 +20,9 @@ $(STAGES) :
 	@printf "Running Stage $@ ... "
 	@./modmul stage$@ < stage$@.input > stage$@.test
 	@if diff stage$@.test stage$@.output > /dev/null; then \
-		printf "PASSED\n";                             \
+		printf "\\e[32mPASSED\\e[39m\n";               \
 	else                                                   \
-		printf "FAILED\n";                             \
+		printf "\\e[31mFAILED\\e[39m\n";               \
 	fi
 	@rm stage$@.test
 
