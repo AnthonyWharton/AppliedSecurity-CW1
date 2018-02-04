@@ -162,9 +162,47 @@ void stage3()
  */
 void stage4() 
 {
+	// Initialisation
+	mpz_t m, a1, a2, p, q, g, x, c1, c2;
+	mpz_init(m);
+	mpz_init(a1);
+	mpz_init(a2);
+	mpz_init(p);
+	mpz_init(q);
+	mpz_init(g);
+	mpz_init(x);
+	mpz_init(c1);
+	mpz_init(c2);
+	
+	// Main loop, Check for EOF/Read in first input
+	while (gmp_scanf("%ZX", p) == 1) {
+		// Read rest of inputs
+		if (gmp_scanf("%ZX", q ) != 1) abort();
+		if (gmp_scanf("%ZX", g ) != 1) abort();
+		if (gmp_scanf("%ZX", x ) != 1) abort();
+		if (gmp_scanf("%ZX", c1) != 1) abort();
+		if (gmp_scanf("%ZX", c2) != 1) abort();
 
-	// fill in this function with solution
+		mpz_neg(a1, x);
+		mpz_mod(a2, a1, q);
+		mpz_powm(a1, c1, a2, p); // Reusing a1
+		mpz_mul(a2, a1, c2);
+		mpz_mod(m, a2, p);
 
+		// Output result as capitalised HEX
+		gmp_printf("%ZX\n", m);
+	}
+
+	// Done - cleanup
+	mpz_clear(m);
+	mpz_clear(a1);
+	mpz_clear(a2);
+	mpz_clear(p);
+	mpz_clear(q);
+	mpz_clear(g);
+	mpz_clear(x);
+	mpz_clear(c1);
+	mpz_clear(c2);
 }
 
 /* The main function acts as a driver for the assignment by simply invoking the

@@ -47,7 +47,7 @@ generality, realism, or style of a solution.
 
 [X] Stage 3 : implement ElGamal encryption                           ( 10%)
 
-[?] Stage 4 : implement ElGamal decryption                           ( 10%)
+[X] Stage 4 : implement ElGamal decryption                           ( 10%)
 
     Extra   : implement (and integrate) major optimisations
 [?]           - has a reasoned approach to pseudo-random generation  ( 10%)
