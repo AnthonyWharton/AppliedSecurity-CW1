@@ -103,9 +103,55 @@ void stage2()
  */
 void stage3() 
 {
+	// Initialisation
+	mpz_t c1, c2, a1, a2, r, p, q, g, h, m;
+	mpz_init(c1);
+	mpz_init(c2);
+	mpz_init(a1);
+	mpz_init(a2);
+	mpz_init(r);
+	mpz_init(p);
+	mpz_init(q);
+	mpz_init(g);
+	mpz_init(h);
+	mpz_init(m);
+	
+	// Main loop, Check for EOF/Read in first input
+	while (gmp_scanf("%ZX", p) == 1) {
+		// Read rest of inputs
+		if (gmp_scanf("%ZX", q) != 1) abort();
+		if (gmp_scanf("%ZX", g) != 1) abort();
+		if (gmp_scanf("%ZX", h) != 1) abort();
+		if (gmp_scanf("%ZX", m) != 1) abort();
 
-	// fill in this function with solution
+		// Set R, NOTE:
+		// Fixed as 1 for testing, normally random number as below
+		mpz_set_ui(r, 1);
+		/* gmp_randstate_t state; */
+		/* gmp_randinit_default(state); */
+		/* mpz_urandomm(r, state, q); */
 
+		// Vanilla ElGamal Encryption
+		mpz_mod(a1, r, q);
+		mpz_powm(c1, g, a1, p);
+
+		mpz_powm(a2, h, a1, p);
+		mpz_mul(a1, a2, m); // Reusing a1
+		mpz_mod(c2, a1, p);
+
+		// Output result as capitalised HEX
+		gmp_printf("%ZX\n%ZX\n", c1, c2);
+	}
+
+	// Done - cleanup
+	mpz_clear(c1);
+	mpz_clear(c2);
+	mpz_clear(r);
+	mpz_clear(p);
+	mpz_clear(q);
+	mpz_clear(g);
+	mpz_clear(h);
+	mpz_clear(m);
 }
 
 /* Perform stage 4:
