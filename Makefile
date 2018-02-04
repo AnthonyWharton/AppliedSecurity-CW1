@@ -18,11 +18,11 @@ STAGES:=1 2 3 4
 
 $(STAGES) :
 	@printf "Running Stage $@ ... "
-	@./modmul stage$@ < stage$@.input > stage$@.test
-	@if diff stage$@.test stage$@.output > /dev/null; then \
-		printf "\\e[32mPASSED\\e[39m\n";               \
-	else                                                   \
-		printf "\\e[31mFAILED\\e[39m\n";               \
+	@./modmul stage$@ < test_data/stage$@.input > stage$@.test
+	@if diff stage$@.test test_data/stage$@.output > /dev/null; then \
+		printf "\\e[32mPASSED\\e[39m\n";                         \
+	else                                                             \
+		printf "\\e[31mFAILED\\e[39m\n";                         \
 	fi
 	@rm stage$@.test
 
