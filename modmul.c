@@ -54,6 +54,12 @@ void stage1()
 void stage2() 
 {
 	// Initialisation
+	mpz_t m1, m2, a1, a2;
+	mpz_init(m1);
+	mpz_init(m2);
+	mpz_init(a1);
+	mpz_init(a2);
+	
 	mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c;
 	mpz_init(N);
 	mpz_init(d);
@@ -65,8 +71,8 @@ void stage2()
 	mpz_init(i_q);
 	mpz_init(c);
 	
-	mpz_t r;
-	mpz_init(r);
+	mpz_t m;
+	mpz_init(m);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", N) == 1) {
@@ -81,13 +87,27 @@ void stage2()
 		if (gmp_scanf("%ZX", c  ) != 1) abort();
 
 		// Naive vanilla RSA decryption
-		mpz_powm(r, c, d, N);
+		//mpz_powm(m, c, d, N);
+
+		// RSA decryption using CRT
+		mpz_powm(m1, c, d_p, p);
+		mpz_powm(m2, c, d_q, q);
+		mpz_sub(a1, m1, m2);
+		mpz_mul(a2, i_q, a1);
+		mpz_mod(a1, a2, p); // Reusing a1
+		mpz_mul(a2, a1, q); // Reusing a2
+		mpz_add(m, m2, a2);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", r);
+		gmp_printf("%ZX\n", m);
 	}
 
 	// Done - cleanup
+	mpz_clear(m1);
+	mpz_clear(m2);
+	mpz_clear(a1);
+	mpz_clear(a2);
+
 	mpz_clear(N);
 	mpz_clear(d);
 	mpz_clear(p);
@@ -98,7 +118,7 @@ void stage2()
 	mpz_clear(i_q);
 	mpz_clear(c);
 
-	mpz_clear(r);
+	mpz_clear(m);
 }
 
 /* Perform stage 3:
