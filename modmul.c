@@ -16,12 +16,14 @@
 void stage1() 
 {
 	// Initialisation
-	mpz_t rop, N, e, m;
-	mpz_init(rop);
+	mpz_t N, e, m;
 	mpz_init(N);
 	mpz_init(e);
 	mpz_init(m);
 	
+	mpz_t r;
+	mpz_init(r);
+
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", N) == 1) {
 		// Read rest of inputs
@@ -29,17 +31,18 @@ void stage1()
 		if (gmp_scanf("%ZX", m) != 1) abort();
 
 		// Vanilla RSA encryption
-		mpz_powm(rop, m, e, N);
+		mpz_powm(r, m, e, N);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", rop);
+		gmp_printf("%ZX\n", r);
 	}
 
 	// Done - cleanup
-	mpz_clear(rop);
 	mpz_clear(N);
 	mpz_clear(e);
 	mpz_clear(m);
+	
+	mpz_clear(r);
 }
 
 /* Perform stage 2:
@@ -51,8 +54,7 @@ void stage1()
 void stage2() 
 {
 	// Initialisation
-	mpz_t rop, N, d, p, q, d_p, d_q, i_p, i_q, c;
-	mpz_init(rop);
+	mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c;
 	mpz_init(N);
 	mpz_init(d);
 	mpz_init(p);
@@ -62,6 +64,9 @@ void stage2()
 	mpz_init(i_p);
 	mpz_init(i_q);
 	mpz_init(c);
+	
+	mpz_t r;
+	mpz_init(r);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", N) == 1) {
@@ -76,14 +81,13 @@ void stage2()
 		if (gmp_scanf("%ZX", c  ) != 1) abort();
 
 		// Naive vanilla RSA decryption
-		mpz_powm(rop, c, d, N);
+		mpz_powm(r, c, d, N);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", rop);
+		gmp_printf("%ZX\n", r);
 	}
 
 	// Done - cleanup
-	mpz_clear(rop);
 	mpz_clear(N);
 	mpz_clear(d);
 	mpz_clear(p);
@@ -93,6 +97,8 @@ void stage2()
 	mpz_clear(i_p);
 	mpz_clear(i_q);
 	mpz_clear(c);
+
+	mpz_clear(r);
 }
 
 /* Perform stage 3:
@@ -104,17 +110,21 @@ void stage2()
 void stage3() 
 {
 	// Initialisation
-	mpz_t c1, c2, a1, a2, r, p, q, g, h, m;
+	mpz_t c1, c2, a1, a2;
 	mpz_init(c1);
 	mpz_init(c2);
 	mpz_init(a1);
 	mpz_init(a2);
-	mpz_init(r);
+	
+	mpz_t p, q, g, h, m;
 	mpz_init(p);
 	mpz_init(q);
 	mpz_init(g);
 	mpz_init(h);
 	mpz_init(m);
+	
+	mpz_t r;
+	mpz_init(r);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", p) == 1) {
@@ -146,12 +156,14 @@ void stage3()
 	// Done - cleanup
 	mpz_clear(c1);
 	mpz_clear(c2);
-	mpz_clear(r);
+	
 	mpz_clear(p);
 	mpz_clear(q);
 	mpz_clear(g);
 	mpz_clear(h);
 	mpz_clear(m);
+	
+	mpz_clear(r);
 }
 
 /* Perform stage 4:
@@ -163,16 +175,20 @@ void stage3()
 void stage4() 
 {
 	// Initialisation
-	mpz_t m, a1, a2, p, q, g, x, c1, c2;
-	mpz_init(m);
+	mpz_t a1, a2;
 	mpz_init(a1);
 	mpz_init(a2);
+	
+	mpz_t p, q, g, x, c1, c2;
 	mpz_init(p);
 	mpz_init(q);
 	mpz_init(g);
 	mpz_init(x);
 	mpz_init(c1);
 	mpz_init(c2);
+	
+	mpz_t m;
+	mpz_init(m);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", p) == 1) {
@@ -194,15 +210,17 @@ void stage4()
 	}
 
 	// Done - cleanup
-	mpz_clear(m);
 	mpz_clear(a1);
 	mpz_clear(a2);
+	
 	mpz_clear(p);
 	mpz_clear(q);
 	mpz_clear(g);
 	mpz_clear(x);
 	mpz_clear(c1);
 	mpz_clear(c2);
+	
+	mpz_clear(m);
 }
 
 /* The main function acts as a driver for the assignment by simply invoking the
