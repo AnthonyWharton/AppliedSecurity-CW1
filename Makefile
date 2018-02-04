@@ -9,7 +9,22 @@ modmul : $(wildcard *.[ch])
 
 .DEFAULT_GOAL = all
 
-all   : modmul
+all   : modmul test
 
 clean : 
 	@rm -f core modmul
+
+STAGES:=1 2 3 4
+
+$(STAGES) :
+	@printf "Running Stage $@ ... "
+	@./modmul stage$@ < stage$@.input > stage$@.test
+	@if diff stage$@.test stage$@.output > /dev/null; then \
+		printf "PASSED\n";                             \
+	else                                                   \
+		printf "FAILED\n";                             \
+	fi
+	@rm stage$@.test
+
+test : $(STAGES) modmul
+

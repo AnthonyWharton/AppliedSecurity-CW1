@@ -50,9 +50,49 @@ void stage1()
  */
 void stage2() 
 {
+	// Initialisation
+	mpz_t rop, N, d, p, q, d_p, d_q, i_p, i_q, c;
+	mpz_init(rop);
+	mpz_init(N);
+	mpz_init(d);
+	mpz_init(p);
+	mpz_init(q);
+	mpz_init(d_p);
+	mpz_init(d_q);
+	mpz_init(i_p);
+	mpz_init(i_q);
+	mpz_init(c);
+	
+	// Main loop, Check for EOF/Read in first input
+	while (gmp_scanf("%ZX", N) == 1) {
+		// Read rest of inputs
+		if (gmp_scanf("%ZX", d  ) != 1) abort();
+		if (gmp_scanf("%ZX", p  ) != 1) abort();
+		if (gmp_scanf("%ZX", q  ) != 1) abort();
+		if (gmp_scanf("%ZX", d_p) != 1) abort();
+		if (gmp_scanf("%ZX", d_q) != 1) abort();
+		if (gmp_scanf("%ZX", i_p) != 1) abort();
+		if (gmp_scanf("%ZX", i_q) != 1) abort();
+		if (gmp_scanf("%ZX", c  ) != 1) abort();
 
-	// fill in this function with solution
+		// Naive vanilla RSA decryption
+		mpz_powm(rop, c, d, N);
 
+		// Output result as capitalised HEX
+		gmp_printf("%ZX\n", rop);
+	}
+
+	// Done - cleanup
+	mpz_clear(rop);
+	mpz_clear(N);
+	mpz_clear(d);
+	mpz_clear(p);
+	mpz_clear(q);
+	mpz_clear(d_p);
+	mpz_clear(d_q);
+	mpz_clear(i_p);
+	mpz_clear(i_q);
+	mpz_clear(c);
 }
 
 /* Perform stage 3:
@@ -90,19 +130,15 @@ int main(int argc, char* argv[])
 		abort();
 	}
 	
-	if      (!strcmp(argv[1], "stage1")) {
+	if (!strcmp(argv[1], "stage1")) {
 		stage1();
-	}
-	else if (!strcmp(argv[1], "stage2")) {
+	} else if (!strcmp(argv[1], "stage2")) {
 		stage2();
-	}
-	else if (!strcmp(argv[1], "stage3")) {
+	} else if (!strcmp(argv[1], "stage3")) {
 		stage3();
-	}
-	else if (!strcmp(argv[1], "stage4")) {
+	} else if (!strcmp(argv[1], "stage4")) {
 		stage4();
-	}
-	else {
+	} else {
 		abort();
 	}
 	
