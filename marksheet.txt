@@ -41,7 +41,7 @@ outside this list can warrant an increase/decrease in marks, with examples
 including hard to quantify features such as the efficiency, robustness, 
 generality, realism, or style of a solution.
 
-[?] Stage 1 : implement RSA     encryption                           ( 10%)
+[X] Stage 1 : implement RSA     encryption                           ( 10%)
 
 [?] Stage 2 : implement RSA     decryption                           ( 10%)
 

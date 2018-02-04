@@ -4,8 +4,8 @@
  * which can be found via http://creativecommons.org (and should be included as 
  * LICENSE.txt within the associated archive or repository).
  */
-
 #include "modmul.h"
+
 
 /* Perform stage 1:
  * 
@@ -13,25 +13,30 @@
  * - compute the RSA encryption c, then
  * - write the ciphertext c to stdout.
  */
-
 void stage1() 
 {
-	mpz_t N, e, m;
-
+	// Initialisation
+	mpz_t rop, N, e, m;
+	mpz_init(rop);
 	mpz_init(N);
 	mpz_init(e);
 	mpz_init(m);
+	
+	// Main loop, Check for EOF/Read in first input
+	while (gmp_scanf("%ZX", N) == 1) {
+		// Read rest of inputs
+		if (gmp_scanf("%ZX", e) != 1) abort();
+		if (gmp_scanf("%ZX", m) != 1) abort();
 
-	if (gmp_scanf("%Zd", N) != 1) {
-		abort();
-	}
-	if (gmp_scanf("%Zd", e) != 1) {
-		abort();
-	}
-	if (gmp_scanf("%Zd", m) != 1) {
-		abort();
+		// Vanilla RSA encryption
+		mpz_powm(rop, m, e, N);
+
+		// Output result as capitalised HEX
+		gmp_printf("%ZX\n", rop);
 	}
 
+	// Done - cleanup
+	mpz_clear(rop);
 	mpz_clear(N);
 	mpz_clear(e);
 	mpz_clear(m);
@@ -43,7 +48,6 @@ void stage1()
  * - compute the RSA decryption m, then
  * - write the plaintext m to stdout.
  */
-
 void stage2() 
 {
 
@@ -57,7 +61,6 @@ void stage2()
  * - compute the ElGamal encryption c = (c_1,c_2), then
  * - write the ciphertext c to stdout.
  */
-
 void stage3() 
 {
 
@@ -71,7 +74,6 @@ void stage3()
  * - compute the ElGamal decryption m, then
  * - write the plaintext m to stdout.
  */
-
 void stage4() 
 {
 
@@ -82,7 +84,6 @@ void stage4()
 /* The main function acts as a driver for the assignment by simply invoking the
  * correct function for the requested stage.
  */
-
 int main(int argc, char* argv[])
 {
 	if (argc != 2) {
