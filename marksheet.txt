@@ -16,7 +16,7 @@
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long (in hours) you spent on it *in total*:
 
-effort : [...] hours
+effort : [5] hours
 
 -------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ generality, realism, or style of a solution.
     Extra   : implement (and integrate) major optimisations
 [?]           - has a reasoned approach to pseudo-random generation  ( 10%)
 [X]           - uses Chinese Remainder Theorem (CRT)                 ( 10%)
-[?]           - uses non-binary (i.e., "windowed") exponentiation    ( 15%)
+[X]           - uses non-binary (i.e., "windowed") exponentiation    ( 15%)
 [?]           - uses Montgomery multiplication wherever appropriate  ( 25%)
 
                                                                      ------

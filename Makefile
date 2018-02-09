@@ -9,7 +9,7 @@ modmul : $(wildcard *.[ch])
 
 .DEFAULT_GOAL = all
 
-all   : modmul test
+all   : modmul
 
 clean : 
 	@rm -f core modmul
@@ -27,4 +27,3 @@ $(STAGES) :
 	@rm stage$@.test
 
 test : $(STAGES) modmul
-

@@ -6,6 +6,81 @@
  */
 #include "modmul.h"
 
+/* Performs rop <- x^y (mod N)
+ * Using the sliding widow method for exponentiation. 
+ * Window size is defined with k.
+ */
+void sliding_exponentiation(mpz_t rop, 
+                            mpz_t x, 
+                            mpz_t y, 
+                            mpz_t N, 
+                            unsigned char k)
+{
+	
+	if (k < 1 || k > 64) abort();
+
+	// Variable Initialisation
+	mpz_t x2, temp, _rop;
+	mpz_init_set_ui(_rop, 1);
+	mpz_init(x2);
+	mpz_init(temp);
+	
+	// Precompute values of: 
+	// x^1, x^3, x^5, ... , x^(2*k - 1) under modulo N
+	mpz_t *T = malloc((1 << (k-1)) * sizeof(mpz_t));
+	mpz_init_set(T[0], x);
+	mpz_powm_ui(x2, x, 2, N); // Pre-computed x^2 value
+	for (int i = 1; i < (1 << (k-1)); i++) {
+		mpz_init(T[i]);
+		mpz_mul(T[i], T[i-1], x2);
+		mpz_mod(T[i], T[i], N);
+	}
+	
+	int i = mpz_sizeinbase(y, 2) - 1; // Counter/Position
+	int l = 0;                        // Least sig. bit pos. of the window
+	unsigned long u = 0;              // Binary representation of window
+	
+	// Loop until we hit the end of the number
+	while (i >= 0) {
+		// Check if bit of y (exponent) is 0
+		if (mpz_tstbit(y, i) == 0) {
+			l = i;
+			u = 0;
+		} else {
+			// Find least significant bit of window
+			l = MAX(i-k+1, 0);
+			l = mpz_scan1(y, l);
+			 
+			// Extract window into separate variable
+			u = 0;
+			for (int j=i; j>=l; j--) u = (u << 1) + mpz_tstbit(y,j);
+		}
+
+		// Bit shift answer left by window size
+		mpz_set_ui(temp, 2);
+		mpz_powm_ui(temp, temp, i-l+1, N);
+		mpz_powm(_rop, _rop, temp, N);
+
+		// If the window was not empty, multiply by the relevant 
+		// precomputed value to the answer for that window.
+		if (u != 0) {
+			mpz_mul(_rop, _rop, T[((u-1)/2)]);
+			mpz_mod(_rop, _rop, N);
+		}
+
+		// Continue next iteration of loop to bits less significant than
+		// that of the window we just computed.
+		i = l - 1;
+	}
+	
+	// Finally set the answer
+	mpz_set(rop, _rop);
+
+	// Cleanup
+	mpz_clear(x2);
+	mpz_clear(temp);
+	for (int i = 0; i < (1 << (k-1)); i++) mpz_clear(T[i]);
+}
 
 /* Perform stage 1:
  * 
@@ -31,7 +106,7 @@ void stage1()
 		if (gmp_scanf("%ZX", m) != 1) abort();
 
 		// Vanilla RSA encryption
-		mpz_powm(r, m, e, N);
+		sliding_exponentiation(r, m, e, N, 5);
 
 		// Output result as capitalised HEX
 		gmp_printf("%ZX\n", r);
@@ -87,11 +162,11 @@ void stage2()
 		if (gmp_scanf("%ZX", c  ) != 1) abort();
 
 		// Naive vanilla RSA decryption
-		//mpz_powm(m, c, d, N);
+		//sliding_exponentiation(m, c, d, N, 5);
 
 		// RSA decryption using CRT
-		mpz_powm(m1, c, d_p, p);
-		mpz_powm(m2, c, d_q, q);
+		sliding_exponentiation(m1, c, d_p, p, 5);
+		sliding_exponentiation(m2, c, d_q, q, 5);
 		mpz_sub(a1, m1, m2);
 		mpz_mul(a2, i_q, a1);
 		mpz_mod(a1, a2, p); // Reusing a1
@@ -163,9 +238,9 @@ void stage3()
 
 		// Vanilla ElGamal Encryption
 		mpz_mod(a1, r, q);
-		mpz_powm(c1, g, a1, p);
+		sliding_exponentiation(c1, g, a1, p, 5);
 
-		mpz_powm(a2, h, a1, p);
+		sliding_exponentiation(a2, h, a1, p, 5);
 		mpz_mul(a1, a2, m); // Reusing a1
 		mpz_mod(c2, a1, p);
 
@@ -221,7 +296,7 @@ void stage4()
 
 		mpz_neg(a1, x);
 		mpz_mod(a2, a1, q);
-		mpz_powm(a1, c1, a2, p); // Reusing a1
+		sliding_exponentiation(a1, c1, a2, p, 5); // Reusing a1
 		mpz_mul(a2, a1, c2);
 		mpz_mod(m, a2, p);
 
@@ -249,9 +324,19 @@ void stage4()
 int main(int argc, char* argv[])
 {
 	if (argc != 2) {
-		abort();
+		
+		mpz_t rop, m, e, N;
+		mpz_init(rop);
+		mpz_init_set_ui(m, 4);
+		mpz_init_set_ui(e, 4);
+		mpz_init_set_ui(N, 10000);
+
+		sliding_exponentiation(rop, m, e, N, 5);
+		/* gmp_printf("ANSWER: %Zd\n", rop); */
+
+		return 1;
 	}
-	
+
 	if (!strcmp(argv[1], "stage1")) {
 		stage1();
 	} else if (!strcmp(argv[1], "stage2")) {
@@ -261,7 +346,7 @@ int main(int argc, char* argv[])
 	} else if (!strcmp(argv[1], "stage4")) {
 		stage4();
 	} else {
-		abort();
+		return 1;
 	}
 	
 	return 0;

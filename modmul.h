@@ -14,4 +14,6 @@
 #include <string.h>
 #include    <gmp.h>
 
+#define MAX(a,b) (a > b ? a : b)
+
 #endif
