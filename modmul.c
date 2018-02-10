@@ -6,6 +6,56 @@
  */
 #include "modmul.h"
 
+#define ENTROPY_SOURCE "/dev/urandom"
+#define RANDOM_SAMPLES 4
+#define RANDOM_SIZE GMP_LIMB_BITS * RANDOM_SAMPLES
+
+#define WINDOW_SIZE 5
+
+unsigned long read_ui(int fd) {
+	unsigned long seed_data;
+	ssize_t res = read(fd, &seed_data, sizeof(seed_data));
+	if (res < 0) {
+		printf("Could not read from %s as an entropy source\n", 
+		       ENTROPY_SOURCE);
+		abort();
+	}
+	return seed_data;
+}
+
+void generate_random(mpz_t rop, mp_bitcnt_t n)
+{
+	int rnd_file = open("/dev/urandom", O_RDONLY);
+	if (rnd_file < 0) {
+		printf("Could not open %s as an entropy source\n", 
+		       ENTROPY_SOURCE);
+		abort();
+	} else {
+		mpz_t seed;
+		mpz_init2(seed, RANDOM_SIZE);
+		unsigned long seed_data;
+		
+		for (int i = 0; i < RANDOM_SAMPLES; i++) {
+			// Read 64 bits from entropy source, add to seed limb
+			seed_data = read_ui(rnd_file);
+			seed->_mp_d[i] = seed_data;
+			seed->_mp_size++;
+		}
+		
+		// Set up GMP Random Number State
+		gmp_randstate_t state;
+		gmp_randinit_mt(state);
+		gmp_randseed(state, seed);
+
+		// Generate Random Number
+		mpz_urandomb(rop, state, n);
+
+		// Clean up
+		mpz_clear(seed);
+		gmp_randclear(state);
+	}
+}
+
 /* Performs rop <- x^y (mod N)
  * Using the sliding widow method for exponentiation. 
  * Window size is defined with k.
@@ -90,14 +140,15 @@ void sliding_exponentiation(mpz_t rop,
  */
 void stage1() 
 {
-	// Initialisation
+	// Initialisation - Inputs
 	mpz_t N, e, m;
 	mpz_init(N);
 	mpz_init(e);
 	mpz_init(m);
 	
-	mpz_t r;
-	mpz_init(r);
+	// Initialisation - Results
+	mpz_t rop;
+	mpz_init(rop);
 
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", N) == 1) {
@@ -106,18 +157,19 @@ void stage1()
 		if (gmp_scanf("%ZX", m) != 1) abort();
 
 		// Vanilla RSA encryption
-		sliding_exponentiation(r, m, e, N, 5);
+		sliding_exponentiation(rop, m, e, N, 5);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", r);
+		gmp_printf("%ZX\n", rop);
 	}
 
-	// Done - cleanup
+	// Cleanup - Inputs
 	mpz_clear(N);
 	mpz_clear(e);
 	mpz_clear(m);
 	
-	mpz_clear(r);
+	// Cleanup - Results
+	mpz_clear(rop);
 }
 
 /* Perform stage 2:
@@ -128,13 +180,7 @@ void stage1()
  */
 void stage2() 
 {
-	// Initialisation
-	mpz_t m1, m2, a1, a2;
-	mpz_init(m1);
-	mpz_init(m2);
-	mpz_init(a1);
-	mpz_init(a2);
-	
+	// Initialisation - Inputs
 	mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c;
 	mpz_init(N);
 	mpz_init(d);
@@ -145,9 +191,17 @@ void stage2()
 	mpz_init(i_p);
 	mpz_init(i_q);
 	mpz_init(c);
-	
-	mpz_t m;
-	mpz_init(m);
+
+	// Initialisation - Working Variables
+	mpz_t m1, m2, a1, a2;
+	mpz_init(m1);
+	mpz_init(m2);
+	mpz_init(a1);
+	mpz_init(a2);
+
+	// Initialisation - Results
+	mpz_t rop;
+	mpz_init(rop);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", N) == 1) {
@@ -171,18 +225,13 @@ void stage2()
 		mpz_mul(a2, i_q, a1);
 		mpz_mod(a1, a2, p); // Reusing a1
 		mpz_mul(a2, a1, q); // Reusing a2
-		mpz_add(m, m2, a2);
+		mpz_add(rop, m2, a2);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", m);
+		gmp_printf("%ZX\n", rop);
 	}
 
-	// Done - cleanup
-	mpz_clear(m1);
-	mpz_clear(m2);
-	mpz_clear(a1);
-	mpz_clear(a2);
-
+	// Cleanup - Inputs
 	mpz_clear(N);
 	mpz_clear(d);
 	mpz_clear(p);
@@ -193,7 +242,14 @@ void stage2()
 	mpz_clear(i_q);
 	mpz_clear(c);
 
-	mpz_clear(m);
+	// Cleanup - Working Variables
+	mpz_clear(m1);
+	mpz_clear(m2);
+	mpz_clear(a1);
+	mpz_clear(a2);
+
+	// Clearnup - Results
+	mpz_clear(rop);
 }
 
 /* Perform stage 3:
@@ -204,13 +260,7 @@ void stage2()
  */
 void stage3() 
 {
-	// Initialisation
-	mpz_t c1, c2, a1, a2;
-	mpz_init(c1);
-	mpz_init(c2);
-	mpz_init(a1);
-	mpz_init(a2);
-	
+	// Initialisation - Inputs
 	mpz_t p, q, g, h, m;
 	mpz_init(p);
 	mpz_init(q);
@@ -218,8 +268,14 @@ void stage3()
 	mpz_init(h);
 	mpz_init(m);
 	
+	// Initialisation - Working Variables
 	mpz_t r;
 	mpz_init(r);
+	
+	// Initialisation - Results
+	mpz_t c1, c2;
+	mpz_init(c1);
+	mpz_init(c2);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", p) == 1) {
@@ -232,33 +288,32 @@ void stage3()
 		// Set R, NOTE:
 		// Fixed as 1 for testing, normally random number as below
 		mpz_set_ui(r, 1);
-		/* gmp_randstate_t state; */
-		/* gmp_randinit_default(state); */
-		/* mpz_urandomm(r, state, q); */
+		//generate_random(r, RANDOM_SIZE);		
 
 		// Vanilla ElGamal Encryption
-		mpz_mod(a1, r, q);
-		sliding_exponentiation(c1, g, a1, p, 5);
-
-		sliding_exponentiation(a2, h, a1, p, 5);
-		mpz_mul(a1, a2, m); // Reusing a1
-		mpz_mod(c2, a1, p);
+		mpz_mod(r, r, q);
+		sliding_exponentiation(c1, g, r, p, 5);
+		sliding_exponentiation(c2, h, r, p, 5);
+		mpz_mul(c2, c2, m);
+		mpz_mod(c2, c2, p);
 
 		// Output result as capitalised HEX
 		gmp_printf("%ZX\n%ZX\n", c1, c2);
 	}
-
-	// Done - cleanup
-	mpz_clear(c1);
-	mpz_clear(c2);
 	
+	// Cleanup - Inputs
 	mpz_clear(p);
 	mpz_clear(q);
 	mpz_clear(g);
 	mpz_clear(h);
 	mpz_clear(m);
 	
+	// Cleanup - Working Variables
 	mpz_clear(r);
+
+	// Cleanup - Results
+	mpz_clear(c1);
+	mpz_clear(c2);
 }
 
 /* Perform stage 4:
@@ -269,11 +324,7 @@ void stage3()
  */
 void stage4() 
 {
-	// Initialisation
-	mpz_t a1, a2;
-	mpz_init(a1);
-	mpz_init(a2);
-	
+	// Initialisation - Inputs
 	mpz_t p, q, g, x, c1, c2;
 	mpz_init(p);
 	mpz_init(q);
@@ -282,8 +333,14 @@ void stage4()
 	mpz_init(c1);
 	mpz_init(c2);
 	
-	mpz_t m;
-	mpz_init(m);
+	// Initialisation - Working Variables
+	mpz_t a1, a2;
+	mpz_init(a1);
+	mpz_init(a2);
+	
+	// Initialisation - Results
+	mpz_t rop;
+	mpz_init(rop);
 	
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", p) == 1) {
@@ -298,16 +355,13 @@ void stage4()
 		mpz_mod(a2, a1, q);
 		sliding_exponentiation(a1, c1, a2, p, 5); // Reusing a1
 		mpz_mul(a2, a1, c2);
-		mpz_mod(m, a2, p);
+		mpz_mod(rop, a2, p);
 
 		// Output result as capitalised HEX
-		gmp_printf("%ZX\n", m);
+		gmp_printf("%ZX\n", rop);
 	}
 
-	// Done - cleanup
-	mpz_clear(a1);
-	mpz_clear(a2);
-	
+	// Cleanup - Inputs
 	mpz_clear(p);
 	mpz_clear(q);
 	mpz_clear(g);
@@ -315,7 +369,12 @@ void stage4()
 	mpz_clear(c1);
 	mpz_clear(c2);
 	
-	mpz_clear(m);
+	// Cleanup - Working Variables
+	mpz_clear(a1);
+	mpz_clear(a2);
+	
+	// Cleanup - Results
+	mpz_clear(rop);
 }
 
 /* The main function acts as a driver for the assignment by simply invoking the
@@ -331,8 +390,9 @@ int main(int argc, char* argv[])
 		mpz_init_set_ui(e, 4);
 		mpz_init_set_ui(N, 10000);
 
-		sliding_exponentiation(rop, m, e, N, 5);
-		/* gmp_printf("ANSWER: %Zd\n", rop); */
+		//sliding_exponentiation(rop, m, e, N, 5);
+		generate_random(rop, RANDOM_SIZE);
+		gmp_printf("ANSWER: %Zd\n", rop);
 
 		return 1;
 	}

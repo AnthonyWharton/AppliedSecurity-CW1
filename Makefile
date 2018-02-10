@@ -26,4 +26,4 @@ $(STAGES) :
 	fi
 	@rm stage$@.test
 
-test : $(STAGES) modmul
+test : modmul $(STAGES)
