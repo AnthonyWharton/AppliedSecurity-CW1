@@ -257,8 +257,12 @@ void stage2()
  * - read each 5-tuple of p, q, g, h and m from stdin,
  * - compute the ElGamal encryption c = (c_1,c_2), then
  * - write the ciphertext c to stdout.
+ *
+ * test == 0: output as required by the spec, using random number generation
+ * test != 0: output as required by the spec, using fixed "random" value of 1
+ *            for testing against given input/output files
  */
-void stage3() 
+void stage3(unsigned char test) 
 {
 	// Initialisation - Inputs
 	mpz_t p, q, g, h, m;
@@ -285,10 +289,12 @@ void stage3()
 		if (gmp_scanf("%ZX", h) != 1) abort();
 		if (gmp_scanf("%ZX", m) != 1) abort();
 
-		// Set R, NOTE:
-		// Fixed as 1 for testing, normally random number as below
-		mpz_set_ui(r, 1);
-		//generate_random(r, RANDOM_SIZE);		
+		// Set r, refer to documentation at function declaration
+		if (test) {
+			mpz_set_ui(r, 1);
+		} else {
+			generate_random(r, RANDOM_SIZE);
+		}
 
 		// Vanilla ElGamal Encryption
 		mpz_mod(r, r, q);
@@ -345,7 +351,7 @@ void stage4()
 	// Main loop, Check for EOF/Read in first input
 	while (gmp_scanf("%ZX", p) == 1) {
 		// Read rest of inputs
-		if (gmp_scanf("%ZX", q ) != 1) abort();
+		if (gmp_scanf("%ZX", q ) != 1) abort(); 
 		if (gmp_scanf("%ZX", g ) != 1) abort();
 		if (gmp_scanf("%ZX", x ) != 1) abort();
 		if (gmp_scanf("%ZX", c1) != 1) abort();
@@ -402,7 +408,9 @@ int main(int argc, char* argv[])
 	} else if (!strcmp(argv[1], "stage2")) {
 		stage2();
 	} else if (!strcmp(argv[1], "stage3")) {
-		stage3();
+		stage3(0);
+	} else if (!strcmp(argv[1], "stage3-test")) {
+		stage3(1);
 	} else if (!strcmp(argv[1], "stage4")) {
 		stage4();
 	} else {
