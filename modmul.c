@@ -12,7 +12,11 @@
 
 #define WINDOW_SIZE 5
 
-unsigned long read_ui(int fd) {
+/**
+ * Reads a unsigned long from a file descriptor.
+ * (Used for reading from entropy source devices)
+ */
+unsigned long read_lu(int fd) {
 	unsigned long seed_data;
 	ssize_t res = read(fd, &seed_data, sizeof(seed_data));
 	if (res < 0) {
@@ -23,6 +27,9 @@ unsigned long read_ui(int fd) {
 	return seed_data;
 }
 
+/**
+ * Generates a random number (rop) between 0 and 2^n-1 inclusive.
+ */
 void generate_random(mpz_t rop, mp_bitcnt_t n)
 {
 	int rnd_file = open("/dev/urandom", O_RDONLY);
@@ -37,7 +44,7 @@ void generate_random(mpz_t rop, mp_bitcnt_t n)
 		
 		for (int i = 0; i < RANDOM_SAMPLES; i++) {
 			// Read 64 bits from entropy source, add to seed limb
-			seed_data = read_ui(rnd_file);
+			seed_data = read_lu(rnd_file);
 			seed->_mp_d[i] = seed_data;
 			seed->_mp_size++;
 		}
@@ -56,7 +63,8 @@ void generate_random(mpz_t rop, mp_bitcnt_t n)
 	}
 }
 
-/* Performs rop <- x^y (mod N)
+/**
+ * Performs rop <- x^y (mod N)
  * Using the sliding widow method for exponentiation. 
  * Window size is defined with k.
  */
@@ -106,7 +114,6 @@ void sliding_exponentiation(mpz_t rop,
 			for (int j=i; j>=l; j--) u = (u << 1) + mpz_tstbit(y,j);
 		}
 
-		// Bit shift answer left by window size
 		mpz_set_ui(temp, 2);
 		mpz_powm_ui(temp, temp, i-l+1, N);
 		mpz_powm(_rop, _rop, temp, N);
@@ -132,7 +139,95 @@ void sliding_exponentiation(mpz_t rop,
 	for (int i = 0; i < (1 << (k-1)); i++) mpz_clear(T[i]);
 }
 
-/* Perform stage 1:
+/**
+ * Finds an R such that R = 2^k, R > N, for the smallest k.
+ * Give N
+ * Sets R = 2^k, R > N, for the smallest k.
+ */
+void mont_findR(mpz_t R, mpz_t N)
+{
+	mpz_t g;
+	mpz_init(g);
+
+	unsigned long i = 0;
+	while (mpz_cmp_ui(g, 1) != 0) {
+		// Set R to be 2^i until R > N, then start calculating GCD(R,N)
+		if (i < sizeof(i)-1) {
+			mpz_set_ui(R, (1 << ++i));
+		} else {
+			mpz_mul_ui(R, R, 2);
+		}
+		if (mpz_cmp(R, N) <= 0) continue;
+		mpz_gcd(g, R, N);
+	}
+
+	mpz_clear(g);
+}
+
+/**
+ * Converts T into Montgomery Form.
+ * Give T, N, R
+ * Sets t = T * R (mod N)
+ */
+void mont_convert(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
+{
+	mpz_mul(t, T, R);
+	mpz_mod(t, t, N);
+}
+
+/**
+ * Produces the Montgomery Reduction of T modulo N.
+ * Give T, N, R
+ * Sets t = T * R^(-1) (mod N)
+ */
+void mont_redux(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
+{
+	mpz_t _t, g, ri, ni, m;
+	mpz_init(g);
+	mpz_init(ri);
+	mpz_init(ni);
+	mpz_init(m);
+	mpz_init_set(_t, t);
+
+	// Work out inverses of R and N
+	mpz_gcdext(g, ri, ni, R, N);
+
+	// Work out the Montgomery Reduction of T modulo N
+	// m = T * (-N^(-1)) (mod R)
+	mpz_neg(ni, ni);
+	mpz_mul(m, T, ni);
+	mpz_mod(m, m, R);
+	// t = T + mN
+	mpz_mul(_t, m, N);
+	mpz_add(_t, T, _t);
+	// t = t / R (mod N)
+	mpz_fdiv_q(_t, _t, R);
+	mpz_mod(_t, _t, N);
+
+	mpz_set(t, _t);
+
+	mpz_clear(_t);
+	mpz_clear(g);
+	mpz_clear(ri);
+	mpz_clear(ni);
+	mpz_clear(m);
+}
+
+/**
+ * Multiplies two numbers, a and b, in Montgomery form, under modulo N. Returns
+ * answer in Montgomery Form.
+ * Give a, b, N
+ * Sets rop = a * b (mod N)
+ */
+void mont_mul(mpz_t rop, mpz_t a, mpz_t b, mpz_t N, mpz_t R)
+{
+	mpz_mul(rop, a, b);
+	mpz_mod(rop, rop, N);
+	mont_redux(rop, rop, N, R);
+}
+
+/** 
+ * Perform stage 1:
  * 
  * - read each 3-tuple of N, e and m from stdin,
  * - compute the RSA encryption c, then
@@ -172,7 +267,8 @@ void stage1()
 	mpz_clear(rop);
 }
 
-/* Perform stage 2:
+/**
+ * Perform stage 2:
  * 
  * - read each 9-tuple of N, d, p, q, d_p, d_q, i_p, i_q and c from stdin,
  * - compute the RSA decryption m, then
@@ -252,7 +348,8 @@ void stage2()
 	mpz_clear(rop);
 }
 
-/* Perform stage 3:
+/**
+ * Perform stage 3:
  * 
  * - read each 5-tuple of p, q, g, h and m from stdin,
  * - compute the ElGamal encryption c = (c_1,c_2), then
@@ -322,7 +419,8 @@ void stage3(unsigned char test)
 	mpz_clear(c2);
 }
 
-/* Perform stage 4:
+/**
+ * Perform stage 4:
  * 
  * - read each 5-tuple of p, q, g, x and c = (c_1,c_2) from stdin,
  * - compute the ElGamal decryption m, then
@@ -383,22 +481,44 @@ void stage4()
 	mpz_clear(rop);
 }
 
-/* The main function acts as a driver for the assignment by simply invoking the
+/**
+ * The main function acts as a driver for the assignment by simply invoking the
  * correct function for the requested stage.
  */
 int main(int argc, char* argv[])
 {
 	if (argc != 2) {
-		
-		mpz_t rop, m, e, N;
+		mpz_t rop, rop_m, R, t1, t2, N, T1, T2;
 		mpz_init(rop);
-		mpz_init_set_ui(m, 4);
-		mpz_init_set_ui(e, 4);
-		mpz_init_set_ui(N, 10000);
+		mpz_init(rop_m);
+		mpz_init(R);
+		mpz_init(t1);
+		mpz_init(t2);
+		mpz_init_set_ui(N, 109);
+		mpz_init_set_ui(T1, 68);
+		mpz_init_set_ui(T2, 57);
+		
+		mont_findR(R, N);
+		gmp_printf("N:%Zd, R:%Zd\n", N, R);
 
-		//sliding_exponentiation(rop, m, e, N, 5);
-		generate_random(rop, RANDOM_SIZE);
-		gmp_printf("ANSWER: %Zd\n", rop);
+		mont_convert(t1, T1, N, R);
+		mont_convert(t2, T2, N, R);
+		gmp_printf("t1:%Zd\nt2:%Zd\n", t1, t2);
+
+		mont_mul(rop_m, t1, t2, N, R);
+		gmp_printf("rop_m:%Zd\n", rop_m);
+
+		mont_redux(rop, rop_m, N, R);
+		gmp_printf("rop:%Zd\n", rop);
+
+		mpz_clear(rop);
+		mpz_clear(rop_m);
+		mpz_clear(R);
+		mpz_clear(t1);
+		mpz_clear(t2);
+		mpz_clear(N);
+		mpz_clear(T1);
+		mpz_clear(T2);
 
 		return 1;
 	}
@@ -419,3 +539,4 @@ int main(int argc, char* argv[])
 	
 	return 0;
 }
+
