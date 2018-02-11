@@ -16,7 +16,7 @@
  * Reads a unsigned long from a file descriptor.
  * (Used for reading from entropy source devices)
  */
-unsigned long read_lu(int fd) {
+unsigned long read_lu(const int fd) {
 	unsigned long seed_data;
 	ssize_t res = read(fd, &seed_data, sizeof(seed_data));
 	if (res < 0) {
@@ -30,7 +30,7 @@ unsigned long read_lu(int fd) {
 /**
  * Generates a random number (rop) between 0 and 2^n-1 inclusive.
  */
-void generate_random(mpz_t rop, mp_bitcnt_t n)
+void generate_random(mpz_t rop, const mp_bitcnt_t n)
 {
 	int rnd_file = open("/dev/urandom", O_RDONLY);
 	if (rnd_file < 0) {
@@ -69,10 +69,10 @@ void generate_random(mpz_t rop, mp_bitcnt_t n)
  * Window size is defined with k.
  */
 void sliding_exponentiation(mpz_t rop, 
-                            mpz_t x, 
-                            mpz_t y, 
-                            mpz_t N, 
-                            unsigned char k)
+                            const mpz_t x, 
+                            const mpz_t y, 
+                            const mpz_t N, 
+                            const unsigned char k)
 {
 	
 	if (k < 1 || k > 64) abort();
@@ -144,7 +144,7 @@ void sliding_exponentiation(mpz_t rop,
  * Give N
  * Sets R = 2^k, R > N, for the smallest k.
  */
-void mont_findR(mpz_t R, mpz_t N)
+void mont_findR(mpz_t R, const mpz_t N)
 {
 	mpz_t g;
 	mpz_init(g);
@@ -169,7 +169,7 @@ void mont_findR(mpz_t R, mpz_t N)
  * Give T, N, R
  * Sets t = T * R (mod N)
  */
-void mont_convert(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
+void mont_convert(mpz_t t, const mpz_t T, const mpz_t N, const mpz_t R)
 {
 	mpz_mul(t, T, R);
 	mpz_mod(t, t, N);
@@ -180,7 +180,7 @@ void mont_convert(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
  * Give T, N, R
  * Sets t = T * R^(-1) (mod N)
  */
-void mont_redux(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
+void mont_redux(mpz_t t, const mpz_t T, const mpz_t N, const mpz_t R)
 {
 	mpz_t _t, g, ri, ni, m;
 	mpz_init(g);
@@ -219,7 +219,11 @@ void mont_redux(mpz_t t, mpz_t T, mpz_t N, mpz_t R)
  * Give a, b, N
  * Sets rop = a * b (mod N)
  */
-void mont_mul(mpz_t rop, mpz_t a, mpz_t b, mpz_t N, mpz_t R)
+void mont_mul(mpz_t rop,
+              const mpz_t a,
+              const mpz_t b,
+              const mpz_t N, 
+              const mpz_t R)
 {
 	mpz_mul(rop, a, b);
 	mpz_mod(rop, rop, N);
@@ -359,7 +363,7 @@ void stage2()
  * test != 0: output as required by the spec, using fixed "random" value of 1
  *            for testing against given input/output files
  */
-void stage3(unsigned char test) 
+void stage3(const unsigned char test) 
 {
 	// Initialisation - Inputs
 	mpz_t p, q, g, h, m;
