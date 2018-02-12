@@ -16,7 +16,7 @@
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long (in hours) you spent on it *in total*:
 
-effort : [5] hours
+effort : [25] hours
 
 -------------------------------------------------------------------------------
 
@@ -28,7 +28,14 @@ by the assignment description of course).  Let us know what third-party
 source code or resources you used (if any) so it's clear what's your work 
 and what isn't:
 
-[...]
+General Reference as to Algorithms, Documentation and Methodology was taken from
+the following links, with no direct copies of any source code:
+ - GMP Manual: https://gmplib.org/manual/index.html
+ - Article on RSA with CRT decryption: https://www.di-mgt.com.au/crt_rsa.html
+ - Wikipedia article on Montgomery Modular Multiplication:
+   https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
+
+Course notes were also reference from both Applied Security and Cryptography A.
 
 -------------------------------------------------------------------------------
 
@@ -66,6 +73,25 @@ Any other documentation, notes or comments that you think are important or
 might be easy to overlook (e.g., a subtle issue or technique in associated
 source code) should go here:
 
-[...]
+Makefile Madness:
+ - All make targes will create ./modmul as per the given source code. 
+ - All stages will run as per the specification, with stage 3 using random
+   numbers.
+ - An additional parameter `./modmul stage3-test` has been added that forces 
+   stage 3 to use 1 as it's random value.
+ - `make` is unchanged to the given source code.
+ - `make test` will test against the given inputs and expected outputs.
+ - `make self-test` will test against the given inputs for stage 1 and 2, and
+   use the output from stage 3 when testing stage 4.
+
+Random number generation is sourced from `/dev/urandom`, with the in built PRNG
+from GMP being used to create random numbers. At the top of modmul.c there is a
+definition for the number of samples to take from urandom, which is by default
+set to 4 (4 * 64bits = 256 bits of entropy).
+
+In general, Mongtgomery form is used in all the functions, with conversion being
+made when input is read, and before output is produced. The exception to this is
+in stage 2, when applying CRT due to the Montgomery forms being under different
+moduli.
 
 -------------------------------------------------------------------------------
