@@ -11,11 +11,11 @@
 #include  <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include  <fcntl.h>
 
 #include <string.h>
 #include    <gmp.h>
 
-#define MAX(a,b) (a > b ? a : b)
+#include "montgomery.h"
 
 #endif
