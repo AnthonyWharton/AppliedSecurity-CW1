@@ -5,14 +5,18 @@ void mont_findR(mpz_t R, const mpz_t N)
 	mpz_t g;
 	mpz_init(g);
 
-	unsigned long i = 0;
+	// Set base, b, in R to be the word length 
+	// (assumed 64 for most modern machines)
+	mpz_set_str(R, "18446744073709551616", 10); // Hardcoded 2^64 value
+	// Just in case:
+	if (sizeof(mp_limb_t) * 8 != 64) {
+		mpz_set_ui(R, 2);
+		mpz_pow_ui(R, R, sizeof(mp_limb_t) * 8);
+	}
+
+	// Set R to be b^k, for a k such that: R > N, and GCD(R,N) = 1
 	while (mpz_cmp_ui(g, 1) != 0) {
-		// Set R to be 2^i until R > N, then start calculating GCD(R,N)
-		if (i < sizeof(i)-1) {
-			mpz_set_ui(R, (1 << ++i));
-		} else {
-			mpz_mul_ui(R, R, 2);
-		}
+		mpz_mul_ui(R, R, 2);
 		if (mpz_cmp(R, N) <= 0) continue;
 		mpz_gcd(g, R, N);
 	}
