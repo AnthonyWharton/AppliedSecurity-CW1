@@ -84,14 +84,23 @@ Makefile Madness:
  - `make self-test` will test against the given inputs for stage 1 and 2, and
    use the output from stage 3 when testing stage 4.
 
-Random number generation is sourced from `/dev/urandom`, with the in built PRNG
-from GMP being used to create random numbers. At the top of modmul.c there is a
-definition for the number of samples to take from urandom, which is by default
-set to 4 (4 * 64bits = 256 bits of entropy).
+Random number generation entropy is sourced from `/dev/urandom`, with the in 
+built PRNG from GMP being used to create random numbers. At the top of modmul.c
+there is a definition for the number of samples to take from urandom, which is 
+by default set to 4 (4 * 64bits = 256 bits of entropy). urandom was chosen as it
+combines multiple different entropy sources, mitigating a single point of trust
+and thus failure. Although `/dev/random` could have been used, this provided
+implementation slow-downs, due to having to keep polling `/dev/random` for 
+entropy if it did not have enough at any given moment.
 
 In general, Mongtgomery form is used in all the functions, with conversion being
 made when input is read, and before output is produced. The exception to this is
 in stage 2, when applying CRT due to the Montgomery forms being under different
 moduli.
+
+Montgomery form uses base (2^64), unless the implementation detects that a limb
+is not 64 bits in size, at which point it uses (2^(sizeof(mp_limb_t) * 8)). This
+is so that we can align computation most efficiently with that of the (assumed)
+underlying computer architechure.
 
 -------------------------------------------------------------------------------
